@@ -67,10 +67,17 @@ class ReflexAgent(Agent):
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        ghostContrib = -1*min([1.0/(util.manhattanDistance(newPos, ghost.getPosition()) + 1) for ghost in newGhostStates])
+        foodArray = [1.0/(util.manhattanDistance(newPos, food) + 1) for food in newFood.asList()]
+        if not foodArray:
+            foodArray = [1]
+        foodContrib = max(foodArray)
+        scoreContrib = (successorGameState.getScore() - currentGameState.getScore())
+
+
+        value = scoreContrib + ghostContrib + foodContrib
+        return value
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -124,8 +131,43 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        max_action = None
+        max_v = None
+        for action in gameState.getLegalActions(self.index):
+            result = self.maxValue(gameState, action, self.depth, self.index + 1)[self.index]
+            if result > max_v:
+                max_v = result
+                max_action = action
+        return max_action
+
+    def maxValue(self, gameState, action, depth, agent_index):
+        """
+        Maximizes value of the 'agent_index'th agent
+        """
+        if not depth:
+            return self.getV(gameState)
+
+        # generate the next gamestate resulting from this action
+        newGameState = gameState.generateSuccessor(agent_index - 1, action)
+        if newGameState.isWin() or newGameState.isLose():
+            return self.getV(newGameState)
+
+        v = None
+        for action in newGameState.getLegalActions(agent_index):
+            result = self.maxValue(newGameState, action,
+                                  depth - 1 if agent_index == self.index else depth,
+                                  (agent_index + 1) % gameState.getNumAgents())
+            # print "v: " + str(v)
+            # print "result: " + str(result)
+            # print "agent: " + str(agent_index)
+            v = result if not v else max(v, result, key=lambda(x): x[agent_index])
+        return v
+
+    def getV(self, gameState):
+        value = gameState.getNumAgents()*[-1*scoreEvaluationFunction(gameState),]
+        value[self.index] *= -1
+        return value
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
