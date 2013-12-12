@@ -178,8 +178,50 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        max_action = None
+        max_v = None
+        for action in gameState.getLegalActions(self.index):
+            result = self.optimalValue(gameState, action, self.depth, self.index + 1, None, None)
+            if result > max_v:
+                max_v = result
+                max_action = action
+        return max_action
+
+    def optimalValue(self, gameState, action, depth, agent_index, alpha, beta):
+        """
+        Maximizes value of the 'agent_index'th agent
+        """
+        if not depth:
+            return self.getV(gameState)
+
+        # generate the next gamestate resulting from this action
+        newGameState = gameState.generateSuccessor(agent_index - 1, action)
+        if newGameState.isWin() or newGameState.isLose():
+            return self.getV(newGameState)
+
+        v = None
+        for action in newGameState.getLegalActions(agent_index):
+            result = self.optimalValue(newGameState, action,
+                                  depth - 1 if agent_index == self.index else depth,
+                                  (agent_index + 1) % gameState.getNumAgents(),
+                                  alpha, beta)
+            if v is None:
+                v = result
+
+            if agent_index == self.index:
+                v = max(v, result)
+                if beta is not None and v > beta:
+                    return v
+                alpha = v if alpha is None else max(alpha, v)
+            else:
+                v = min(v, result)
+                if alpha is not None and v < alpha:
+                    return v
+                beta = v if beta is None else min(beta, v)
+        return v
+
+    def getV(self, gameState):
+        return scoreEvaluationFunction(gameState)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
