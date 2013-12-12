@@ -160,7 +160,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             # print "v: " + str(v)
             # print "result: " + str(result)
             # print "agent: " + str(agent_index)
-            v = result if not v else max(v, result, key=lambda(x): x[agent_index])
+            v = result if v is None else max(v, result, key=lambda(x): x[agent_index])
         return v
 
     def getV(self, gameState):
