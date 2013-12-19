@@ -164,7 +164,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return v
 
     def getV(self, gameState):
-        value = gameState.getNumAgents()*[-1*scoreEvaluationFunction(gameState),]
+        value = gameState.getNumAgents()*[-1*self.evaluationFunction(gameState),]
         value[self.index] *= -1
         return value
 
@@ -222,7 +222,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         return v
 
     def getV(self, gameState):
-        return scoreEvaluationFunction(gameState)
+        return self.evaluationFunction(gameState)
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -273,7 +273,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         return v
 
     def getV(self, gameState):
-        return scoreEvaluationFunction(gameState)
+        return self.evaluationFunction(gameState)
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -282,8 +282,59 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    pos = currentGameState.getPacmanPosition()
+    foodGrid = currentGameState.getFood()
+    ghostStates = currentGameState.getGhostStates()
+
+    closet_ghost_pos = None
+    ghostContrib = 0
+    for ghost in ghostStates:
+        ghost_pos = util.manhattanDistance(pos, ghost.getPosition())
+        closet_ghost_pos = ghost_pos if not closet_ghost_pos or ghost_pos < closet_ghost_pos else closet_ghost_pos
+
+        ghostContrib = -0.5*1.0/(closet_ghost_pos + 1)
+        if ghost.scaredTimer:
+            ghostContrib *= -2
+
+    # compute food contrib
+    closest_food = None
+    closest_food_distance = None
+    for food in foodGrid.asList():
+        food_distance = util.manhattanDistance(pos, food)
+        if not closest_food or closest_food_distance > food_distance:
+            closest_food_distance = food_distance
+            closest_food = food
+
+    if not closest_food_distance:
+        closest_food_distance = 1000000
+    foodContrib = 1.0/closest_food_distance - 2.1*len(foodGrid.asList())
+
+    # is a wall in our way?
+    wall_contrib = 0
+    if closest_food:
+        if closest_food[0] < pos[0]:
+            if currentGameState.hasWall(pos[0] - 1, pos[1]):
+                wall_contrib -= 1
+        elif closest_food[0] > pos[0]:
+            if currentGameState.hasWall(pos[0] + 1, pos[1]):
+                wall_contrib -= 1
+        elif closest_food[1] < pos[1]:
+            if currentGameState.hasWall(pos[0], pos[1] - 1):
+                wall_contrib -= 1
+        elif closest_food[1] > pos[1]:
+            if currentGameState.hasWall(pos[0], pos[1] + 1):
+                wall_contrib -= 1
+
+    # find closest power pellet
+    powerPelletContrib = [1.0/util.manhattanDistance(pos, pellet) for pellet in currentGameState.getCapsules()]
+    if not powerPelletContrib:
+        powerPelletContrib = 0
+    else:
+        powerPelletContrib = 0.9*min(powerPelletContrib)
+
+    value = 0.5*wall_contrib + foodContrib + ghostContrib + 10*currentGameState.getScore() + powerPelletContrib
+
+    return value
 
 # Abbreviation
 better = betterEvaluationFunction
