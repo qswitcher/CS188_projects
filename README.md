@@ -10,3 +10,6 @@ Project 2
 -Implement an expectimax search with Alpha-Beta pruning to help guide Pacman through a small maze with ghosts.
 
 video of Pacman navigating maze in project 2 (https://dl.dropboxusercontent.com/u/61513461/pacman.mov). Please excuse the poor video quality.
+
+Project 3
+-Implementation of Reinforcement Learning techniques to teach pacman how to play Pacman.
